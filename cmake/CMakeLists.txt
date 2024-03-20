@@ -127,6 +127,7 @@ cmake_dependent_option(onnxruntime_DEBUG_NODE_INPUTS_OUTPUTS_ENABLE_DUMP_TO_SQLD
 option(onnxruntime_USE_DML "Build with DirectML support" OFF)
 option(onnxruntime_USE_MIGRAPHX "Build with AMDMIGraphX support" OFF)
 option(onnxruntime_USE_WINML "Build with WinML support" OFF)
+option(onnxruntime_USE_FPGA "Build with FPGA support" OFF)
 option(onnxruntime_USE_ACL "Build with ACL support" OFF)
 option(onnxruntime_USE_ACL_1902 "Build with ACL version 1902 support" OFF)
 option(onnxruntime_USE_ACL_1905 "Build with ACL version 1905 support" OFF)
@@ -518,6 +519,9 @@ if (NOT MSVC AND NOT (CMAKE_SYSTEM_NAME STREQUAL "iOS"))
   set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
 endif()
 
+#! If build for RISCV lichhePi
+set(onnxruntime_LINK_LIBATOMIC true)
+
 set(REPO_ROOT ${PROJECT_SOURCE_DIR}/..)
 set(ONNXRUNTIME_ROOT ${PROJECT_SOURCE_DIR}/../onnxruntime)
 set(ORTTRAINING_ROOT ${PROJECT_SOURCE_DIR}/../orttraining)
@@ -797,6 +801,11 @@ if (onnxruntime_USE_WINML)
   list(APPEND ORT_PROVIDER_FLAGS  -DUSE_WINML=1)
   list(APPEND ORT_PROVIDER_CMAKE_FLAGS -Donnxruntime_USE_WINML=1)
   list(APPEND ONNXRUNTIME_PROVIDER_NAMES winml)
+endif()
+if (onnxruntime_USE_FPGA)
+    list(APPEND ORT_PROVIDER_FLAGS  -DUSE_FPGA=1)
+    list(APPEND ORT_PROVIDER_CMAKE_FLAGS -Donnxruntime_USE_FPGA=1)
+    list(APPEND ONNXRUNTIME_PROVIDER_NAMES fpga)
 endif()
 if (onnxruntime_USE_ACL)
     list(APPEND ORT_PROVIDER_FLAGS  -DUSE_ACL=1)
@@ -1114,6 +1123,31 @@ function(onnxruntime_add_include_to_target dst_target)
       endif()
     endforeach()
 endfunction()
+
+# FPGA
+if (onnxruntime_USE_FPGA)
+  set(onnxruntime_USE_FPGA ON)
+
+  # if (NOT ${onnxruntime_FPGA_LIBS} STREQUAL "")
+  #   add_library(arm_compute SHARED IMPORTED)
+  #   set_target_properties(arm_compute PROPERTIES
+  #       IMPORTED_NO_SONAME 1
+  #       IMPORTED_LOCATION "${onnxruntime_FPGA_LIBS}/libarm_compute.so")
+
+  #   add_library(arm_compute_core SHARED IMPORTED)
+  #   set_target_properties(arm_compute_core PROPERTIES
+  #       IMPORTED_NO_SONAME 1
+  #       IMPORTED_LOCATION "${onnxruntime_FPGA_LIBS}/libarm_compute_core.so")
+
+  #   add_library(arm_compute_graph SHARED IMPORTED)
+  #   set_target_properties(arm_compute_graph PROPERTIES
+  #       IMPORTED_NO_SONAME 1
+  #       IMPORTED_LOCATION "${onnxruntime_FPGA_LIBS}/libarm_compute_graph.so")
+  # endif()
+
+  # list(APPEND onnxruntime_EXTERNAL_LIBRARIES arm_compute arm_compute_core arm_compute_graph)
+
+endif()
 
 # ACL
 if (onnxruntime_USE_ACL OR onnxruntime_USE_ACL_1902 OR onnxruntime_USE_ACL_1905 OR onnxruntime_USE_ACL_1908 OR onnxruntime_USE_ACL_2002 OR onnxruntime_USE_ACL_2308)
